@@ -2,12 +2,14 @@ package com.aulaandroid.calculadoraimc
 
 import android.os.Bundle
 import android.util.Log
+import android.util.Log.i
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,9 +18,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -28,11 +38,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,8 +75,30 @@ fun IMCScreen(modifier: Modifier = Modifier) {
     var peso by remember {
         mutableStateOf("")
     }
+    var imc by remember {
+        mutableStateOf(0.0)
+    }
+
+    var classificacao = when {
+        imc == 0.0 -> "Faça o calculo imc"
+        imc < 18.5 -> "Abaixo do peso."
+        imc < 25.0 -> "Peso Ideal."
+        imc < 30.0 -> "Levemente acima do peso"
+        imc < 35.0 -> "Obesidade grau I"
+        imc < 40.0 -> "Obesidade grau II"
+        else -> "Obesidade grau III"
+    }
+    var corFundo = when {
+        imc == 0.0 || imc >= 18.5 && imc <= 25.0 -> Color(76, 175, 80, 255)
+        imc >= 25.0 && imc < 30 -> Color(250, 222, 1, 255)
+        else -> Color.Red
+    }
+
+    val imcFormatado = "%.2f".format(imc)
+
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         //-- card formulario --
         Column(
@@ -84,7 +121,7 @@ fun IMCScreen(modifier: Modifier = Modifier) {
         }
         Column(
             modifier = Modifier.fillMaxWidth()
-                .padding(horizontal = 24.dp )
+                .padding(horizontal = 24.dp),
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth()
@@ -93,36 +130,92 @@ fun IMCScreen(modifier: Modifier = Modifier) {
                 colors = CardDefaults.cardColors(
                     containerColor = Color(0xfff9f6f6)
                 ),
-                elevation = CardDefaults.cardElevation(4.dp)
+                elevation = CardDefaults.cardElevation(4.dp),
             ) {
-                TextField(
-                    value = altura,
-                    onValueChange = {novoValor ->
-                        Log.i("Altura em cm", novoValor)
-                        altura = novoValor
-                    },
-                    placeholder = {
-                        Text(text = "Digite sua altura")
-                    },
-                    label = {
-                        Text(text = "Digite sua altura em cm")
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = "Seus dados",
+                        color = colorResource(R.color.cor_app),
+                        fontSize = 24.sp
+                    )
+                    OutlinedTextField(
+                        value = altura,
+                        onValueChange = {novoValor ->
+                            Log.i("Altura em cm", novoValor)
+                            altura = novoValor
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number
+                        ),
+                        placeholder = {
+                            Text(text = "Digite sua altura",
+                                fontSize = 10.sp)
+                        },
+                        label = {
+                            Text(text = "Digite sua altura em cm",
+                                fontSize = 10.sp)
+                        }
+                    )
+                    OutlinedTextField(
+                        value = peso,
+                        onValueChange = {novoValorPeso ->
+                            Log.i("Peso em kilograma", novoValorPeso)
+                            peso = novoValorPeso
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        placeholder = {
+                            Text(text = "Digite seu peso",
+                                fontSize = 10.sp)
+                        },
+                        label = {
+                            Text(text = "digite seu peso em kilograma",
+                                fontSize = 10.sp)
+                        }
+                    )
+                    Button(
+                        onClick = {
+                            var alturaConvertida = altura.replace(",", ".").toDoubleOrNull() ?: 0.0
+                            var pesoConvertido = peso.replace(",", ".").toDoubleOrNull() ?:0.0
+                            imc = pesoConvertido / (alturaConvertida * alturaConvertida)
+
+                        },
+                    ) {
+                        Text(text = "Calcular",
+                            fontSize = 24.sp)
                     }
-                )
-                TextField(
-                    value = peso,
-                    onValueChange = {novoValorPeso ->
-                        Log.i("Peso em kilograma", novoValorPeso)
-                        peso = novoValorPeso
-                    },
-                    placeholder = {
-                        Text(text = "Digite seu peso")
-                    },
-                    label = {
-                        Text(text = "digite seu peso em kilograma")
+                    OutlinedButton(
+                        onClick = {
+                            altura = ""
+                            peso = ""
+                            imc = 0.0
+                        },
+                    ) {
+                        Text(text = "Limpar campos",
+                            fontSize = 24.sp)
                     }
-                )
+                }
             }
         }
-        Row() { }
+        Row(
+            modifier = modifier.width(250.dp)
+                .height(250.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(corFundo)
+                .padding(horizontal = 34.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(text = "${imcFormatado}, ${classificacao}",
+                color = Color.White,
+                fontSize = 16.sp)
+        }
     }
 }
