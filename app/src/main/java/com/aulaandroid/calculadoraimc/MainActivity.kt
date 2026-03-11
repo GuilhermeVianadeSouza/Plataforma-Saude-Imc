@@ -89,8 +89,8 @@ fun IMCScreen(modifier: Modifier = Modifier) {
         else -> "Obesidade grau III"
     }
     var corFundo = when {
-        imc == 0.0 || imc >= 18.5 && imc <= 25.0 -> Color(76, 175, 80, 255)
-        imc >= 25.0 && imc < 30 -> Color(250, 222, 1, 255)
+        imc == 0.0 || imc >= 18.5 && imc < 25.0 -> Color(76, 175, 80, 255)
+        imc >= 25.0 && imc < 30 -> Color(243, 135, 39, 255)
         else -> Color.Red
     }
 
